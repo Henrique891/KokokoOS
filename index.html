@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>KokokoOS 4.5</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0b1220;
+  overflow:hidden;
+  color:white;
+}
+
+/* 🪟 WINDOW */
+.window{
+  position:absolute;
+  width:320px;
+  height:220px;
+  background:#111827;
+  border:1px solid #374151;
+  border-radius:10px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.5);
+  overflow:hidden;
+}
+
+/* TITLEBAR */
+.titlebar{
+  background:#1f2937;
+  padding:6px;
+  display:flex;
+  justify-content:space-between;
+  cursor:grab;
+  font-size:13px;
+}
+
+/* CONTENT */
+.content{
+  padding:10px;
+}
+
+/* 🧱 TASKBAR */
+#taskbar{
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  height:40px;
+  background:#0f172a;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:5px;
+}
+
+/* TASK BUTTON */
+.taskbtn{
+  background:#1f2937;
+  padding:5px 10px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:12px;
+}
+
+/* DESKTOP ICONS */
+.icon{
+  margin:10px;
+  padding:8px;
+  background:#1f2937;
+  display:inline-block;
+  border-radius:6px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<!-- DESKTOP -->
+<div id="desktop">
+
+  <div class="icon" onclick="openExplorer()">📁 Explorer</div>
+  <div class="icon" onclick="openStore()">🛒 Store</div>
+  <div class="icon" onclick="openDefender()">🛡️ Defender</div>
+
+</div>
+
+<!-- TASKBAR -->
+<div id="taskbar"></div>
+
+<script>
+
+/* =====================
+   🧠 ENGINE STATE
+===================== */
+
+let z = 10;
+const windows = {};
+const taskbar = {};
+
+/* =====================
+   🪟 CREATE WINDOW
+===================== */
+
+function createWindow(id, title, content){
+
+  if(windows[id]){
+    windows[id].classList.remove("hidden");
+    focus(windows[id]);
+    return;
+  }
+
+  const win = document.createElement("div");
+  win.className = "window";
+  win.style.left = "100px";
+  win.style.top = "80px";
+
+  win.innerHTML = `
+    <div class="titlebar">
+      <span>${title}</span>
+      <div>
+        <button onclick="minimize('${id}')">_</button>
+        <button onclick="closeWin('${id}')">✖</button>
+      </div>
+    </div>
+    <div class="content">${content}</div>
+  `;
+
+  document.body.appendChild(win);
+
+  windows[id] = win;
+
+  addTask(id, title);
+
+  drag(win);
+  focus(win);
+}
+
+/* =====================
+   🖱️ DRAG SYSTEM
+===================== */
+
+function drag(win){
+
+  const bar = win.querySelector(".titlebar");
+
+  let ox=0, oy=0, down=false;
+
+  bar.onmousedown = (e)=>{
+    down = true;
+    ox = e.clientX - win.offsetLeft;
+    oy = e.clientY - win.offsetTop;
+    focus(win);
+  };
+
+  document.onmousemove = (e)=>{
+    if(!down) return;
+
+    win.style.left = (e.clientX - ox) + "px";
+    win.style.top = (e.clientY - oy) + "px";
+  };
+
+  document.onmouseup = ()=> down = false;
+}
+
+/* =====================
+   🧠 FOCUS SYSTEM
+===================== */
+
+function focus(win){
+  win.style.zIndex = z++;
+}
+
+/* =====================
+   🧹 WINDOW CONTROLS
+===================== */
+
+function minimize(id){
+  windows[id].classList.add("hidden");
+}
+
+function closeWin(id){
+  windows[id].remove();
+  delete windows[id];
+
+  if(taskbar[id]){
+    taskbar[id].remove();
+    delete taskbar[id];
+  }
+}
+
+/* =====================
+   📌 TASKBAR
+===================== */
+
+function addTask(id, title){
+
+  const btn = document.createElement("div");
+  btn.className = "taskbtn";
+  btn.innerText = title;
+
+  btn.onclick = ()=>{
+    windows[id].classList.remove("hidden");
+    focus(windows[id]);
+  };
+
+  document.getElementById("taskbar").appendChild(btn);
+
+  taskbar[id] = btn;
+}
+
+/* =====================
+   📁 APPS
+===================== */
+
+function openExplorer(){
+
+  createWindow("explorer","📁 Explorer",`
+    <p>Documentos</p>
+    <p>Downloads</p>
+    <p>KokokoSystem</p>
+  `);
+}
+
+function openStore(){
+
+  createWindow("store","🛒 Store",`
+    <button onclick="alert('🛡️ Defender instalado!')">
+      Instalar Defender
+    </button>
+  `);
+}
+
+function openDefender(){
+
+  createWindow("defender","🛡️ Defender",`
+    <button onclick="removeViruses()">
+      Remover vírus
+    </button>
+  `);
+}
+
+/* =====================
+   🦠 VIRUS SYSTEM (simples)
+===================== */
+
+function removeViruses(){
+  document.querySelectorAll(".virus").forEach(v=>v.remove());
+  alert("🛡️ sistema limpo!");
+}
+
+</script>
+
+</body>
+</html>erval(()=>{
+
+  if(Math.random() < 0.25){
+    spawnVirus();
+  }
+
+},4000);
+
+</script>
+
+</body>
+</html>======
+   DRAG (ARRASTAR)
+====================== */
+
+function makeDraggable(win) {
+  const bar = win.querySelector(".titlebar");
+
+  let offsetX = 0;
+  let offsetY = 0;
+  let dragging = false;
+
+  bar.addEventListener("mousedown", (e) => {
+    if (win.classList.contains("maximized")) return;
+
+    dragging = true;
+
+    offsetX = e.clientX - win.offsetLeft;
+    offsetY = e.clientY - win.offsetTop;
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+
+    win.style.left = (e.clientX - offsetX) + "px";
+    win.style.top = (e.clientY - offsetY) + "px";
+  });
+
+  document.addEventListener("mouseup", () => {
+    dragging = false;
+  });
+}
+
+/* ======================
+   APPFLOW
+====================== */
+
+function openAppflow() {
+
+  const win = document.createElement("div");
+  win.className = "window";
+  win.style.zIndex = ++z;
+  win.style.left = "120px";
+  win.style.top = "80px";
+
+  win.innerHTML = `
+    <div class="titlebar">
+      <span>Appflow</span>
+      <div>
+        <button onclick="toggleMaximize(this)">🗖</button>
+        <button onclick="closeWindow(this)">X</button>
+      </div>
+    </div>
+
+    <div id="appflow"></div>
+  `;
+
+  document.body.appendChild(win);
+
+  renderStore();
+  makeDraggable(win);
+}
+
+/* ======================
+   LOJA
+====================== */
+
+function renderStore() {
+  const container = document.getElementById("appflow");
+  container.innerHTML = "";
+
+  const apps = getApps();
+
+  apps.forEach((app, index) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <b>${app.name}</b>
+
+      <button onclick='openApp(${JSON.stringify(app)})'>Abrir</button>
+      <button onclick='uninstall(${index})'>Desinstalar</button>
+    `;
+
+    container.appendChild(card);
+  });
+
+  const install = document.createElement("div");
+  install.className = "card";
+  install.innerHTML = `<button onclick="installApp()">Instalar App (.kok)</button>`;
+  container.appendChild(install);
+}
+
+/* ======================
+   INSTALAR
+====================== */
+
+function installApp() {
+  const input = prompt("Cole o app JSON:");
+
+  try {
+    const app = JSON.parse(input);
+
+    let apps = getApps();
+    apps.push(app);
+
+    saveApps(apps);
+    loadDesktop();
+
+  } catch {
+    alert("App inválido");
+  }
+}
+
+/* ======================
+   DESINSTALAR
+====================== */
+
+function uninstall(index) {
+  let apps = getApps();
+  apps.splice(index, 1);
+  saveApps(apps);
+  loadDesktop();
+  renderStore();
+}
+
+/* ======================
+   INIT
+====================== */
+
+window.onload = () => {
+
+  if (!localStorage.getItem(KEY)) {
+    saveApps([
+      {
+        name: "Notas",
+        html: "<textarea style='width:100%;height:200px'></textarea>"
+      },
+      {
+        name: "Ajuda",
+        html: "<h3>KokokoOS</h3><p>Sistema funcionando</p>"
+      }
+    ]);
+  }
+
+  loadDesktop();
+};
+
+</script>
+
+</body>
+</html>
