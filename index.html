@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>KokokoOS 8.0 🛸⚽</title>
+
+<style>
+body{
+  margin:0;
+  background:#111;
+  color:#0f0;
+  font-family: monospace;
+  overflow:hidden;
+}
+
+#ui{
+  padding:10px;
+  border-bottom:1px solid #0f0;
+}
+
+canvas{
+  display:block;
+  margin:auto;
+  background:#000;
+  border:2px solid #0f0;
+}
+
+#ovni{
+  position:absolute;
+  font-size:40px;
+  pointer-events:none;
+  filter: drop-shadow(0 0 6px lime);
+}
+</style>
+</head>
+
+<body>
+
+<div id="ui">
+🏟️ KOKOKOOS 8.0 — OVNI EDITION 🛸⚽<br>
+Clique no campo para chutar a bola
+</div>
+
+<canvas id="game" width="800" height="400"></canvas>
+
+<div id="ovni">🛸</div>
+
+<script>
+
+/* ===================== ⚽ BOLA ===================== */
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let ball = {
+  x: 200,
+  y: 100,
+  vx: 3,
+  vy: 2,
+  r: 12
+};
+
+/* ===================== 🌍 FÍSICA ===================== */
+
+let gravity = 0.2;
+let friction = 0.99;
+
+/* ===================== 🛸 OVNI ===================== */
+
+const ovni = document.getElementById("ovni");
+
+let ox = 100;
+let oy = 100;
+let ovx = 2.5;
+let ovy = 1.8;
+
+/* ===================== OVNI MOVIMENTO ===================== */
+
+function moveOVNI(){
+
+  ox += ovx;
+  oy += ovy;
+
+  if(ox > window.innerWidth - 50 || ox < 0){
+    ovx *= -1;
+  }
+
+  if(oy > window.innerHeight - 50 || oy < 0){
+    ovy *= -1;
+  }
+
+  ovni.style.left = ox + "px";
+  ovni.style.top = oy + "px";
+
+  requestAnimationFrame(moveOVNI);
+}
+
+moveOVNI();
+
+/* ===================== ⚽ FÍSICA DA BOLA ===================== */
+
+function update(){
+
+  // gravidade
+  ball.vy += gravity;
+
+  // posição
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  // colisões
+  if(ball.y + ball.r > canvas.height){
+    ball.y = canvas.height - ball.r;
+    ball.vy *= -0.8;
+  }
+
+  if(ball.y - ball.r < 0){
+    ball.y = ball.r;
+    ball.vy *= -0.8;
+  }
+
+  if(ball.x + ball.r > canvas.width){
+    ball.x = canvas.width - ball.r;
+    ball.vx *= -0.8;
+  }
+
+  if(ball.x - ball.r < 0){
+    ball.x = ball.r;
+    ball.vx *= -0.8;
+  }
+
+  // atrito
+  ball.vx *= friction;
+  ball.vy *= friction;
+
+  draw();
+
+  requestAnimationFrame(update);
+}
+
+/* ===================== 🎨 DESENHO ===================== */
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // ⚽ bola
+  ctx.beginPath();
+  ctx.fillStyle = "white";
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+  ctx.fill();
+
+  // brilho
+  ctx.beginPath();
+  ctx.strokeStyle = "lime";
+  ctx.stroke();
+}
+
+/* ===================== 🖱️ CHUTE ===================== */
+
+canvas.addEventListener("click", (e)=>{
+
+  let rect = canvas.getBoundingClientRect();
+
+  let mx = e.clientX - rect.left;
+  let my = e.clientY - rect.top;
+
+  ball.vx += (ball.x - mx) * 0.05;
+  ball.vy += (ball.y - my) * 0.05;
+});
+
+/* ===================== START ===================== */
+
+update();
+
+</script>
+
+</body>
+</html>
