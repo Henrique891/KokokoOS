@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>KokokoOS 8.0 🏟️</title>
+
+<style>
+body{
+  margin:0;
+  background:#111;
+  font-family:monospace;
+  overflow:hidden;
+  color:#0f0;
+}
+
+/* ================= TOPBAR ================= */
+
+#topbar{
+  padding:8px;
+  border-bottom:1px solid #0f0;
+  background:#000;
+}
+
+/* ================= CANVAS ================= */
+
+canvas{
+  display:block;
+  margin:auto;
+  background:#000;
+  border:2px solid #0f0;
+}
+
+/* ================= WINDOW ================= */
+
+.window{
+  position:absolute;
+  background:#000;
+  border:1px solid #0f0;
+  padding:10px;
+  width:240px;
+  z-index:10;
+  cursor:grab;
+}
+
+/* ================= CARD ================= */
+
+.card{
+  border:1px solid #0f0;
+  margin:4px;
+  padding:4px;
+}
+
+/* ================= VIRUS ================= */
+
+.virus{
+  position:absolute;
+  font-size:22px;
+  cursor:pointer;
+}
+
+/* ================= OVNI ================= */
+
+#ovni{
+  position:absolute;
+  font-size:40px;
+  pointer-events:none;
+  filter:drop-shadow(0 0 6px lime);
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="topbar">
+🏟️ KOKOKOOS 8.0<br>
+
+<button onclick="spawnVirus()">🦠 Vírus</button>
+<button onclick="openAppflow()">📦 Appflow</button>
+<button onclick="setWallpaper()">🖼️ Wallpaper</button>
+<button onclick="resetWallpaper()">⬛ Reset</button>
+</div>
+
+<canvas id="game" width="800" height="400"></canvas>
+
+<div id="ovni">🛸</div>
+
+<script>
+
+/* ================= STATE ================= */
+
+let z = 1;
+const KEY = "kokoko_apps";
+
+/* ================= BALL PHYSICS ================= */
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let ball = {
+  x:200,
+  y:100,
+  vx:3,
+  vy:2,
+  r:12
+};
+
+let gravity = 0.2;
+let friction = 0.99;
+
+/* ================= OVNI ================= */
+
+const ovni = document.getElementById("ovni");
+
+let ox=100, oy=100;
+let ovx=2.5, ovy=1.8;
+
+/* ================= OVNI LOOP ================= */
+
+function moveOVNI(){
+  ox += ovx;
+  oy += ovy;
+
+  if(ox > window.innerWidth-50 || ox < 0) ovx *= -1;
+  if(oy > window.innerHeight-50 || oy < 0) ovy *= -1;
+
+  ovni.style.left = ox+"px";
+  ovni.style.top = oy+"px";
+
+  requestAnimationFrame(moveOVNI);
+}
+moveOVNI();
+
+/* ================= BALL LOOP ================= */
+
+function update(){
+
+  ball.vy += gravity;
+
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  if(ball.y + ball.r > canvas.height){
+    ball.y = canvas.height - ball.r;
+    ball.vy *= -0.8;
+  }
+
+  if(ball.y - ball.r < 0){
+    ball.y = ball.r;
+    ball.vy *= -0.8;
+  }
+
+  if(ball.x + ball.r > canvas.width){
+    ball.x = canvas.width - ball.r;
+    ball.vx *= -0.8;
+  }
+
+  if(ball.x - ball.r < 0){
+    ball.x = ball.r;
+    ball.vx *= -0.8;
+  }
+
+  ball.vx *= friction;
+  ball.vy *= friction;
+
+  draw();
+  requestAnimationFrame(update);
+}
+
+/* ================= DRAW ================= */
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  ctx.beginPath();
+  ctx.fillStyle="white";
+  ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+  ctx.fill();
+}
+
+/* ================= CLICK KICK ================= */
+
+canvas.addEventListener("click",(e)=>{
+
+  let r = canvas.getBoundingClientRect();
+  let mx = e.clientX - r.left;
+  let my = e.clientY - r.top;
+
+  ball.vx += (ball.x - mx)*0.05;
+  ball.vy += (ball.y - my)*0.05;
+});
+
+/* ================= VIRUS ================= */
+
+function spawnVirus(){
+
+  const v=document.createElement("div");
+  v.className="virus";
+  v.innerHTML="🦠";
+  v.style.left=Math.random()*90+"%";
+  v.style.top=Math.random()*80+"%";
+
+  v.onclick=()=>v.remove();
+
+  document.body.appendChild(v);
+}
+
+/* ================= WALLPAPER ================= */
+
+function setWallpaper(){
+  let url = prompt("URL wallpaper:");
+  if(!url) return;
+
+  document.body.style.background =
+    `url(${url}) center/cover no-repeat fixed`;
+}
+
+function resetWallpaper(){
+  document.body.style.background="#111";
+}
+
+/* ================= APPFLOW ================= */
+
+function getApps(){
+  return JSON.parse(localStorage.getItem(KEY)||"[]");
+}
+
+function saveApps(a){
+  localStorage.setItem(KEY,JSON.stringify(a));
+}
+
+/* ================= WINDOW DRAG ================= */
+
+function makeDraggable(win){
+  let dragging=false;
+  let ox=0, oy=0;
+
+  win.addEventListener("mousedown",(e)=>{
+    dragging=true;
+    ox=e.clientX-win.offsetLeft;
+    oy=e.clientY-win.offsetTop;
+  });
+
+  document.addEventListener("mousemove",(e)=>{
+    if(!dragging) return;
+    win.style.left=(e.clientX-ox)+"px";
+    win.style.top=(e.clientY-oy)+"px";
+  });
+
+  document.addEventListener("mouseup",()=>dragging=false);
+}
+
+/* ================= APPFLOW ================= */
+
+function openAppflow(){
+
+  const win=document.createElement("div");
+  win.className="window";
+  win.style.left="80px";
+  win.style.top="80px";
+  win.style.zIndex=++z;
+
+  win.innerHTML=`
+    📦 Appflow<br>
+    <button onclick="installApp()">Instalar JSON</button>
+    <div id="appflow"></div>
+  `;
+
+  document.body.appendChild(win);
+
+  makeDraggable(win);
+  renderStore();
+}
+
+function renderStore(){
+
+  const c=document.getElementById("appflow");
+  if(!c) return;
+
+  let apps=getApps();
+  c.innerHTML="";
+
+  apps.forEach((a,i)=>{
+
+    let div=document.createElement("div");
+    div.className="card";
+
+    div.innerHTML=`
+      📦 ${a.name}<br>
+      <button onclick="alert('${a.name}')">Abrir</button>
+      <button onclick="uninstall(${i})">Del</button>
+    `;
+
+    c.appendChild(div);
+  });
+}
+
+/* ================= INSTALL ================= */
+
+function installApp(){
+
+  let input=prompt("JSON app:");
+
+  try{
+    let app=JSON.parse(input);
+
+    if(!app.name){
+      alert("App precisa de nome");
+      return;
+    }
+
+    let apps=getApps();
+    apps.push(app);
+    saveApps(apps);
+
+    renderStore();
+    alert("Instalado!");
+
+  }catch(e){
+    alert("JSON inválido");
+  }
+}
+
+/* ================= UNINSTALL ================= */
+
+function uninstall(i){
+  let apps=getApps();
+  apps.splice(i,1);
+  saveApps(apps);
+  renderStore();
+}
+
+/* ================= START ================= */
+
+update();
+
+</script>
+
+</body>
+</html>
